@@ -15,6 +15,8 @@ const search = {
     series: { url: 'series', maxPage: 1239 } as Search,
 };
 
+const pages: Record<string, Array<Torrent>> = {};
+
 /**
  * Récupère la liste des torrents de la page donnée
  * 
@@ -28,10 +30,12 @@ async function fetchTorrentList(page: number, type: Search): Promise<Torrent[]> 
     const regex = /<a\s.*?title="([^"]*)".*?href="([^"]*)".*?>/gm;
     const matches = data.matchAll(regex);
 
-    const list = [];
+    const list: Array<Torrent> = [];
 
     for (const match of matches) {
-        list.push({ title: match[1], link: `${BASE_URL}${match[2]}` });
+        const torrent: Torrent = { title: match[1], link: `${BASE_URL}${match[2]}` };
+        list.push(torrent);
+        pages[type.url].push(torrent);
     }
 
     return list;
@@ -46,6 +50,11 @@ async function fetchTorrentList(page: number, type: Search): Promise<Torrent[]> 
  */
 async function fetchTorrentByTitle(title: string, type: Search): Promise<Torrent[]> {
     const finalList: Torrent[] = [];
+
+    const pagesType = pages[type.url];
+    if (pagesType?.length > 0) {
+        return pagesType.filter(torrent => torrent.title.toLowerCase().includes(title.toLowerCase()));
+    }
 
     const promises: Promise<Torrent[]>[] = [];
 
